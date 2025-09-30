@@ -120,7 +120,12 @@ class WC_ETA_RS_WAPF_Handler {
 
         // Determine risk level
         $days_until_ship = $now->diff($required_ship_date)->days;
-        $risk_level = $this->calculate_risk_level($days_until_ship, $now, $required_ship_date);
+        $risk_level = $this->calculate_risk_level(
+            $days_until_ship,
+            $now,
+            $required_ship_date,
+            $target_date_obj
+        );
 
         // Generate ETA data
         $eta_data = array(
@@ -148,9 +153,15 @@ class WC_ETA_RS_WAPF_Handler {
         return $eta_data;
     }
 
-    private function calculate_risk_level($days_until_ship, $now, $required_ship_date) {
+    private function calculate_risk_level($days_until_ship, $now, $required_ship_date, $target_date_obj) {
         if ($required_ship_date < $now) {
             return 'cannot_guarantee'; // Već prekasno
+        }
+
+        $days_until_target = (int) $now->diff($target_date_obj)->format('%r%a');
+
+        if ($days_until_target <= 1) {
+            return 'cannot_guarantee'; // Datum je danas ili sutra - fizički neizvodljivo
         }
 
         if ($days_until_ship <= 1) {
